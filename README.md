@@ -9,6 +9,7 @@ First to finish of the mvp portion for ls:
 
 TODO: get user base directory for ~/
       stop showing hidden files / directories
+      when lsing intoa made up dir do an error msg
 
 Next I'll do the reach portion for ls. Start adding some flags
 
