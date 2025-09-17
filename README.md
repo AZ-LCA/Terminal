@@ -1,5 +1,5 @@
 
-This is a project I'm taking on for fun to learn about system calls and gain more familiarity with aseembly code.
+This is a project I'm taking on for fun to learn about system calls and gain more familiarity with assembly code.
 
 
 
