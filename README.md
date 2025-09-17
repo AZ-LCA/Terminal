@@ -11,7 +11,7 @@ TODO: get user base directory for ~/
       stop showing hidden files / directories
       when lsing intoa made up dir do an error msg
 
-Next I'll do the reach portion for ls. Start adding some flags
+Next I'll do the reach portion for ls. Start adding some flags - use bitmask etc
 
 Then I'll look at logically similar segments and see what can be refactored under one tag that can be called many times to a) speed up progress, and b) eliminate duplicate code
 
