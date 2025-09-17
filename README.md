@@ -13,6 +13,8 @@ TODO: get user base directory for ~/
 
 Next I'll do the reach portion for ls. Start adding some flags
 
+Then I'll look at logically similar segments and see what can be refactored under one tag that can be called many times to a) speed up progress, and b) eliminate duplicate code
+
 Later I'll stop auto-exiting the program when an unrecognised string is entered and instead make it such that typing 'exit' will exit the program
 
 Long term goal is a fully functioning terminal that works on my computer that includes flags, built without any libraries.
