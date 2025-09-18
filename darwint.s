@@ -59,6 +59,7 @@ MOV	    x16, #5 // SYS_OPEN
 SVC     #0x80
 MOV	    x19, x0
 
+// SYS_CLOSE
 
 
 
@@ -235,12 +236,12 @@ ADD	    x9, x7, x8 // Check current entry pointer
 // BL test_successful_input
 
 LDRH    w3, [x9, #16] // record length 8 or 16
-CBZ	    w3, main_loop // same check as above
+CBZ	    w3, sys_close // same check as above
 // LDRB    w4, [x9, #20] // filename length 11 or 19 || LDRB or LDRH
 // Now to SYS WRITE THE NAME OF THE FILE WITH 
 MOV	    x23, #21
 
-print_filename_loop: // filename length unreliable as appears to be set len
+print_filename_loop: // filename length unreliable as appears to be set len UPDATE - FIXED
 MOV	    x16, #4 // SYS_WRITE
 LDRB    w24, [x9, x23]
 CBZ	    w24, print_newline
@@ -263,6 +264,11 @@ SVC #0x80
 UXTW    x3, w3 // convert 32 to 64 bit
 ADD	    x8, x8, x3 // adding our record length so we get to next item
 B print_loop
+sys_close:
+MOV     x16, #6
+MOV	    x0, x19
+SVC	    0x80
+B	    main_loop
 
 get_path_details: // for ls if not dot before / assume from the users folder and for ~/ thats supposed to be just user folder as well
 // FIND NUM OF SPACES OR IF NULL TERMINATOR THEN JUST strb a / there and put len 1 so we get current directory
