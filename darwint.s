@@ -75,7 +75,7 @@ MOV     x4, #0
 copy_user:
 LDRB    w5, [x2, x4] // get our letter
 CBZ     w5, env_done // check not null term
-STRB    w5, [x3, x4] // store in x3
+STRB    w5, [x3, x4] // store in address x3 buffer
 ADD     x4, x4, #1 // increment index
 CMP     x4, #31 // make sure not overflowing buffer
 B.LT    copy_user
