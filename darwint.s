@@ -2,8 +2,8 @@
 .globl _main
 .p2align 2
 
-// learn about field programmable gate arrays
-
+// Note to self - learn about field programmable gate arrays
+// Debug guide for if i take any extended breaks
 // clang -o darwint darwint.s
 // DEBUG: lldb ./darwint
 /*
@@ -38,43 +38,70 @@
 
 */
 
+// x0 is argc, x1 is argv, x2 is arg pointer at the start of the program run.
+
+get_env_vars:
+ADRP    x0, envp@PAGE
+ADD     x0, x0, envp@PAGEOFF // Loading our saved envp
+LDR     x0, [x0]
+MOV     x1, #0
+
+env_search:
+LDR     x2, [x0, x1, lsl #3] // Each ptr in envp arr is 64 bits - 8 bytes hence lsl #3
+CBZ     x2, env_done // END OF ARR CHECK
+
+// Check if this starts with "USER="
+LDRB    w3, [x2]
+CMP     w3, #'U'
+B.NE    env_next
+LDRB    w3, [x2, #1]
+CMP     w3, #'S'
+B.NE    env_next
+LDRB    w3, [x2, #2]
+CMP     w3, #'E'
+B.NE    env_next
+LDRB    w3, [x2, #3]
+CMP     w3, #'R'
+B.NE    env_next
+LDRB    w3, [x2, #4]
+CMP     w3, #'='
+B.NE    env_next
+
+ADD     x2, x2, #5  // SO WE SKIP USER=
+ADRP    x3, username@PAGE
+ADD     x3, x3, username@PAGEOFF
+MOV     x4, #0
+
+copy_user:
+LDRB    w5, [x2, x4] // get our letter
+CBZ     w5, env_done // check not null term
+STRB    w5, [x3, x4] // store in x3
+ADD     x4, x4, #1 // increment index
+CMP     x4, #31 // make sure not overflowing buffer
+B.LT    copy_user
+
+MOV     w5, #0 // set final char as null term
+STRB    w5, [x3, x4]
+B       env_done
+
+env_next:
+ADD     x1, x1, #1 // combing thru file as simply as poss
+B       env_search
+
+env_done:
+RET // return to main
+
 _main:
 // Setting up the stack pointer with a pre-decrement for insertion
 STP     x29, x30, [sp, #-16]!
 MOV	    x29, sp // puts the front of sp in x29 even if it changes
 
-B skip_in_progress
+ADRP    x3, envp@PAGE
+ADD     x3, x3, envp@PAGEOFF
+STR     x2, [x3]
 
-// IN PROG SECTION
-ADRP    x3, username@PAGE
-ADD	    x3, x3, username@PAGEOFF
-MOV	    x16, #24
-SVC     #0x80
+BL      get_env_vars
 
-// Going into the /etc/passwd dir gaddamn it all
-ADRP    x0, dir_get_user@PAGE
-ADD	    x0, x0, dir_get_user@PAGEOFF
-MOV	    x1, #0 // RDONLY i think
-MOV	    x16, #5 // SYS_OPEN
-SVC     #0x80
-MOV	    x19, x0
-
-// SYS_CLOSE
-
-
-
-// ls -altFh --color=always
-// ls -aAbBcCdDfhiklmnoqrRsStTuvwWxX --block-size=SIZE --color=always --full-time --group-directories-first --human-readable --inode --literal --numeric-uid-gid --quoting-style=WORD --recursive --reverse --si --sort=WORD --time-style=WORD --tabsize=COLS --width=COLS --indicator-style=WORD
-// there is a lot going on with ls gadamn
-
-read_passwd_file:
-MOV     x16, #3 // SYS_READ
-// we do not want an stdin or out we just want to save the username into the username buffer
-// FIGURE OUT READING THIS
-// Need to parse through the document looking for the UID
-// then on match, record the username in the username buffer
-
-skip_in_progress:
 main_loop:
 
 // CLEAR BUFFER
@@ -90,6 +117,12 @@ main_loop:
 // MOV	    x1, #4096
 // BL	    clear_buf
 // THE INITIAL OUTPUT
+MOV     x16, #4                    // SYS_WRITE
+MOV     x0, #1                     // STDOUT
+ADRP    x1, username@PAGE
+ADD     x1, x1, username@PAGEOFF
+MOV     x2, #32                    // Max username length
+SVC     #0x80
 MOV	    x16, #4 // SYS_WRITE
 MOV	    x0, #1  // STDOUT
 ADRP    x1, prompt@PAGE
@@ -359,7 +392,7 @@ RET
 
 .section __TEXT,__cstring,cstring_literals
 prompt: 
-    .asciz "$ " // DONE
+    .asciz " $ " // DONE
 newline:
     .asciz "\n" // DONE
 ls:
@@ -393,7 +426,11 @@ cp:
 date:
     .asciz "date" // TODO
 dir_get_user:
-    .asciz "/etc/passwd" // To get the username from our UID
+    // .asciz "/etc/passwd" // To get the username from our UID
+    .asciz "/var/db/dslocal/nodes/Default/users/"
+
+
+
 
 // REACH: DIFF FLAGS e.g. ls -la (long form and showing hidden files)
 // REACH: OUTPUT REAL ERROR MESSAGES BY ERRNO (VERY TEXT HEAVY BUT NOT HARD)
@@ -406,3 +443,4 @@ temp_buffer:  .space 256 // for converting our int errnos into strings for handl
 dir_buffer:   .space 4096
 base_offset:  .space 8
 username:     .space 32
+envp:         .space 8
